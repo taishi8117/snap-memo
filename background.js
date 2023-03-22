@@ -25,9 +25,9 @@ chrome.commands.onCommand.addListener(async (command) => {
           tab.id,
           { action: "promptForComment" },
           async (response) => {
-            const comments = response.comment;
+            const comment = response.comment;
 
-            if (comments === null) {
+            if (comment === null) {
               return;
             }
 
@@ -42,15 +42,16 @@ chrome.commands.onCommand.addListener(async (command) => {
                 });
               });
 
+              const { apiUrl, key } = await fetchConfig();
               const payload = {
                 username: email,
                 url,
-                comments,
+                comment,
                 content,
                 timestamp,
+                key,
               };
 
-              const { apiUrl } = await fetchConfig();
               const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: {

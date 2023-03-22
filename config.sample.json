@@ -1,3 +1,4 @@
 {
-  "apiUrl": "https://example.com"
+  "apiUrl": "https://example.com",
+  "key": "secret"
 }
