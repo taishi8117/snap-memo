@@ -34,7 +34,7 @@ def file_info(file_path: str) -> dict:
     }
 
 
-def check_file_size(file_path: str, from_stdin: bool = False) -> None:
+def check_file_size(file_path: str, from_stdin: bool = False):
     if from_stdin:
         content = sys.stdin.read()
         content_size = len(content.encode("utf-8"))
@@ -43,6 +43,8 @@ def check_file_size(file_path: str, from_stdin: bool = False) -> None:
 
     if content_size > MAX_FILE_SIZE:
         raise ValueError("The file size is larger than 1MB.")
+
+    return content_size
 
 
 def is_binary(file_path: str) -> bool:
@@ -70,7 +72,7 @@ def get_git_info(file_path: str) -> Optional[dict]:
         return None
 
 
-def create_json_blob(comment: str, file_path: str) -> dict:
+def create_json_blob(comment: str, file_path: str, content_size: Optional[int]) -> dict:
     if file_path == "--":
         content = sys.stdin.read()
         file_info_str = {"fileType": "stdin"}
@@ -92,6 +94,7 @@ def create_json_blob(comment: str, file_path: str) -> dict:
         "hostname": socket.gethostname(),
         "fileInfo": file_info_str,
         "viewedAt": datetime.now().isoformat(),
+        "contentSize": content_size,
     }
     if git_info:
         json_blob.update(git_info)
@@ -101,7 +104,7 @@ def create_json_blob(comment: str, file_path: str) -> dict:
 
 def send_json_blob(blob: dict, endpoint: str, key: str):
     headers = {
-       "Content-Type": "application/json",
+        "Content-Type": "application/json",
     }
     blob["key"] = key
     response = requests.post(endpoint, data=json.dumps(blob), headers=headers)
@@ -116,13 +119,14 @@ def main():
     comment = sys.argv[1]
     file_path = sys.argv[2] if len(sys.argv) == 3 else "--"
 
+    content_size = None
     try:
-        check_file_size(file_path, from_stdin=(file_path == "--"))
+        content_size = check_file_size(file_path, from_stdin=(file_path == "--"))
     except ValueError as e:
         print(str(e))
         sys.exit(1)
 
-    json_blob = create_json_blob(comment, file_path)
+    json_blob = create_json_blob(comment, file_path, content_size)
 
     # Read configuration from the parent directory
     config_file = os.path.join(
